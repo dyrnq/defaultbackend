@@ -78,12 +78,13 @@ jobs:
             echo ${os}-${arch} && CGO_ENABLED=1 GOOS=${os} GOARCH=${arch} CC=aarch64-linux-musl-gcc go build -ldflags "-linkmode 'external' -extldflags '-static'" -tags 'musl' -o server-${os}-${arch} server.go
 
           done
+          ls -lh .
 
       - name: Build dockerfile (with no push)
         run: |
           latest_tag="--tag ${{ secrets.DOCKER_USERNAME }}/defaultbackend-arm64:${{ matrix.vers }}";
           echo $latest_tag;
-          sudo cp -v -f server-linux-amd64 server
+          sudo cp -v -f server-linux-arm64 server
           docker buildx build \
           --platform linux/arm64/v8 \
           --output "type=image,push=false" \
