@@ -75,7 +75,7 @@ jobs:
             arch=$(awk -F/ '{print $2}' <<< "${tag}")
             # docker run --rm -t -v $PWD:/build "${build_image}" sh -c "apk update && apk add build-base bash git gpgme btrfs-progs-dev llvm15-dev gcc musl-dev make && go env | grep CGO_ENABLED && cd /build && echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} go build -ldflags \"-linkmode 'external' -extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go"
             
-            echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} CC=aarch64-linux-musl-gcc go build -ldflags "-linkmode 'external' -extldflags '-static'" -tags 'musl' -o server-${os}-${arch} server.go
+            echo ${os}-${arch} && CGO_ENABLED=1 GOOS=${os} GOARCH=${arch} CC=aarch64-linux-musl-gcc go build -ldflags "-linkmode 'external' -extldflags '-static'" -tags 'musl' -o server-${os}-${arch} server.go
 
           done
 
