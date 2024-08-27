@@ -6,8 +6,8 @@ The default backend is a service which handles all URL paths and hosts the Ingre
 
 Basically a default backend exposes two URLs:
 
-/healthz that returns 200
-/ that returns 404
+- `/healthz` that returns 200
+- `/` that returns 404
 
 - <https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/default-backend.md>
 
