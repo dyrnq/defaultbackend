@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     strategy:
         fail-fast: false
         matrix:
@@ -43,12 +43,12 @@ jobs:
         shell: bash
         run: |
           build_image="golang:1.21-alpine3.20"
-          dist=( linux/arm64 linux/amd64 )
+          dist=( linux/arm64 )
           for ((i=0; i<=${#dist[@]}-1; i++)); do
             tag="${dist[$i]}"
             os=$(awk -F/ '{print $1}' <<< "${tag}")
             arch=$(awk -F/ '{print $2}' <<< "${tag}")
-            docker run --rm -t -v $PWD:/build "${build_image}" sh -c "apk update && apk add build-base bash git gpgme btrfs-progs-dev llvm15-dev gcc musl-dev make && go env | grep CGO_ENABLED && cd /build && echo ${os}-${arch} && CGO_ENABLE=0 GOOS=${os} GOARCH=${arch} CGO_LDFLAGS=\"-static\" go build -ldflags \"-extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go"            
+            docker run --rm -t -v $PWD:/build "${build_image}" sh -c "apk update && apk add build-base bash git gpgme btrfs-progs-dev llvm15-dev gcc musl-dev make && go env | grep CGO_ENABLED && cd /build && echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} go build -ldflags \"-linkmode 'external' -extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go"            
           done
 
       - name: Build dockerfile (with no push)
