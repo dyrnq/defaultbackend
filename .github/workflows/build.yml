@@ -18,7 +18,6 @@ jobs:
           - "1.4"
           - "1.5"
     steps:
-    steps:
       - name: Install dependencies
         run: |
           sudo apt-get -y update
