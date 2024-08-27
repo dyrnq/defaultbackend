@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     strategy:
         fail-fast: false
         matrix:
@@ -18,9 +18,24 @@ jobs:
           - "1.4"
           - "1.5"
     steps:
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y update
+          sudo apt-get -y install build-essential ca-certificates curl jq gnupg2 ca-certificates psmisc procps xz-utils rsync libglib2.0-dev libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config
+
       -
         name: Checkout
         uses: actions/checkout@v4
+      # ARM64 processors (M1, M2, M3 series) used on macos-14 images are unsupported!
+      # https://github.com/marketplace/actions/setup-docker-on-macos
+      - name: 下载gcc
+        uses: lmq8267/dl-musl@main
+        with:
+          target: aarch64-linux-musl
+
+      - name: 输出gcc版本信息
+        run: $CC -v
       -
         name: Set up QEMU
         id: qemu
@@ -38,6 +53,17 @@ jobs:
           echo "Flags:     ${{ steps.buildx.outputs.flags }}"
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
 
+      - uses: actions/setup-go@v5
+        with:
+          #go-version: '1.20.14'
+          go-version: 'stable'
+
+      - name: Get gopath
+        id: get_gopath
+        run: echo ::set-output name=GOPATH::$(go env GOPATH)
+
+      - run: go env
+      - run: go version
 
       - name: Build defaultbackend binary
         shell: bash
@@ -48,7 +74,10 @@ jobs:
             tag="${dist[$i]}"
             os=$(awk -F/ '{print $1}' <<< "${tag}")
             arch=$(awk -F/ '{print $2}' <<< "${tag}")
-            docker run --rm -t -v $PWD:/build "${build_image}" sh -c "apk update && apk add build-base bash git gpgme btrfs-progs-dev llvm15-dev gcc musl-dev make && go env | grep CGO_ENABLED && cd /build && echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} go build -ldflags \"-linkmode 'external' -extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go"            
+            # docker run --rm -t -v $PWD:/build "${build_image}" sh -c "apk update && apk add build-base bash git gpgme btrfs-progs-dev llvm15-dev gcc musl-dev make && go env | grep CGO_ENABLED && cd /build && echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} go build -ldflags \"-linkmode 'external' -extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go"
+            
+            echo ${os}-${arch} && CGO_ENABLE=1 GOOS=${os} GOARCH=${arch} CC=aarch64-linux-musl-gcc go build -ldflags \"-linkmode 'external' -extldflags '-static'\" -tags 'musl' -o server-${os}-${arch} server.go
+
           done
 
       - name: Build dockerfile (with no push)
